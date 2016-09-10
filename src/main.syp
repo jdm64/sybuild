@@ -1,0 +1,18 @@
+import "cstring.syp";
+
+@void popen(@[]int8 cmd, @[]int8 type);
+
+int pclose(@void stream);
+
+int main(int argc, @[]@[]int8 argv)
+{
+	for (int i = 1; i < argc; i++) {
+		cstring cmd{"saphyr "};
+		cmd.add(argv[i]);
+		auto pf = popen(cmd.get(), "r");
+		pclose(pf);
+		cmd.~this();
+	}
+
+	return 0;
+}

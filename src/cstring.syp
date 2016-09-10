@@ -1,0 +1,55 @@
+int strlen(@[]int8 str);
+
+@[]int8 strcpy(@[]int8 dest, @[]int8 source);
+
+@void memcpy(@void dest, @void source, int size);
+
+class cstring
+{
+	struct this {
+		@[]int8 ptr;
+	}
+
+	this(@[]int8 str)
+	{
+		if (!str) {
+			ptr = null;
+			return;
+		}
+		ptr = new [strlen(str) + 1]int8;
+		strcpy(ptr, str);
+	}
+
+	void set(@[]int8 c_ptr)
+	{
+		if (ptr)
+			~this();
+		ptr = new [strlen(c_ptr) + 1]int8;
+		strcpy(ptr, c_ptr);
+	}
+
+	void add(@[]int8 str)
+	{
+		if (!ptr) {
+			set(str);
+			return;
+		}
+		auto len1 = strlen(ptr);
+		auto len2 = strlen(str);
+		auto p = new [len1 + len2 + 1]int8;
+		memcpy(p, ptr, len1);
+		memcpy(p[len1]$, str, len2 + 1);
+		~this();
+		ptr = p;
+	}
+
+	@[]int8 get()
+	{
+		return ptr;
+	}
+
+	~this()
+	{
+		delete ptr;
+	}
+}
