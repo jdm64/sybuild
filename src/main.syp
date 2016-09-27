@@ -4,12 +4,27 @@ import "cstring.syp";
 
 int pclose(@void stream);
 
+int fread(@void ptr, int size, int count, @void stream);
+
+int fwrite(@void ptr, int size, int count, @void stream);
+
+@void stdout;
+
+void readOutput(@void stream)
+{
+	[128]int8 buf;
+	int n;
+	while ((n = fread(buf$, 1, sizeof buf, stream)) > 0)
+		fwrite(buf$, 1, n, stdout);
+}
+
 int main(int argc, @[]@[]int8 argv)
 {
 	for (int i = 1; i < argc; i++) {
 		cstring cmd{"saphyr "};
 		cmd.add(argv[i]);
 		auto pf = popen(cmd.get(), "r");
+		readOutput(pf);
 		pclose(pf);
 		cmd.~this();
 	}
