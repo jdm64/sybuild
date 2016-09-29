@@ -25,7 +25,10 @@ int main(int argc, @[]@[]int8 argv)
 		cmd.add(argv[i]);
 		auto pf = popen(cmd.get(), "r");
 		readOutput(pf);
-		pclose(pf);
+		if (pclose(pf)) {
+			cmd.~this();
+			break;
+		}
 		cmd.~this();
 	}
 
