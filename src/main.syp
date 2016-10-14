@@ -1,16 +1,18 @@
 import "cstring.syp";
 
-@void popen(@[]int8 cmd, @[]int8 type);
+opaque FILE;
 
-int pclose(@void stream);
+@FILE popen(@[]int8 cmd, @[]int8 type);
 
-int fread(@void ptr, int size, int count, @void stream);
+int pclose(@FILE stream);
 
-int fwrite(@void ptr, int size, int count, @void stream);
+int fread(@void ptr, int size, int count, @FILE stream);
 
-@void stdout;
+int fwrite(@void ptr, int size, int count, @FILE stream);
 
-void readOutput(@void stream)
+@FILE stdout;
+
+void readOutput(@FILE stream)
 {
 	[128]int8 buf;
 	int n;
