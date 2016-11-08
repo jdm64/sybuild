@@ -27,11 +27,10 @@ int main(int argc, @[]StrPtr argv)
 		cmd.add(argv[i]);
 		auto pf = popen(cmd.get(), "r");
 		readOutput(pf);
+		cmd.~this();
 		if (pclose(pf)) {
-			cmd.~this();
 			break;
 		}
-		cmd.~this();
 	}
 
 	return 0;
