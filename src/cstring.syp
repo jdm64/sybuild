@@ -1,16 +1,19 @@
-int strlen(@[]int8 str);
 
-@[]int8 strcpy(@[]int8 dest, @[]int8 source);
+alias StrPtr = @[]int8;
+
+int strlen(StrPtr str);
+
+StrPtr strcpy(StrPtr dest, StrPtr source);
 
 @void memcpy(@void dest, @void source, int size);
 
 class cstring
 {
 	struct this {
-		@[]int8 ptr;
+		StrPtr ptr;
 	}
 
-	this(@[]int8 str)
+	this(StrPtr str)
 	{
 		if (!str) {
 			ptr = null;
@@ -20,7 +23,7 @@ class cstring
 		strcpy(ptr, str);
 	}
 
-	void set(@[]int8 c_ptr)
+	void set(StrPtr c_ptr)
 	{
 		if (ptr)
 			~this();
@@ -28,7 +31,7 @@ class cstring
 		strcpy(ptr, c_ptr);
 	}
 
-	void add(@[]int8 str)
+	void add(StrPtr str)
 	{
 		if (!ptr) {
 			set(str);
@@ -43,7 +46,7 @@ class cstring
 		ptr = p;
 	}
 
-	@[]int8 get()
+	StrPtr get()
 	{
 		return ptr;
 	}

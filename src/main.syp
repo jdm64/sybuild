@@ -2,7 +2,7 @@ import "cstring.syp";
 
 opaque FILE;
 
-@FILE popen(@[]int8 cmd, @[]int8 type);
+@FILE popen(StrPtr cmd, StrPtr type);
 
 int pclose(@FILE stream);
 
@@ -20,7 +20,7 @@ void readOutput(@FILE stream)
 		fwrite(buf$, 1, n, stdout);
 }
 
-int main(int argc, @[]@[]int8 argv)
+int main(int argc, @[]StrPtr argv)
 {
 	for (int i = 1; i < argc; i++) {
 		cstring cmd{"saphyr "};
