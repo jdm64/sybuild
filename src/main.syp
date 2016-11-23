@@ -12,6 +12,11 @@ int fwrite(@void ptr, int size, int count, @FILE stream);
 
 @FILE stdout;
 
+void write(StrPtr str, @FILE stream)
+{
+	fwrite(str, 1, strlen(str), stream);
+}
+
 void readOutput(@FILE stream)
 {
 	[128]int8 buf;
@@ -22,6 +27,10 @@ void readOutput(@FILE stream)
 
 int main(int argc, @[]StrPtr argv)
 {
+	if (argc < 2) {
+		write("no arguments provided\n", stdout);
+		return -1;
+	}
 	for (int i = 1; i < argc; i++) {
 		cstring cmd{"saphyr "};
 		cmd.add(argv[i]);
