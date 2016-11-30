@@ -23,27 +23,39 @@ class cstring
 		strcpy(ptr, str);
 	}
 
-	void set(StrPtr c_ptr)
+	void setRange(StrPtr str, int len)
 	{
 		if (ptr)
 			~this();
-		ptr = new [strlen(c_ptr) + 1]int8;
-		strcpy(ptr, c_ptr);
+		ptr = new [len + 1]int8;
+		memcpy(ptr, str, len);
 	}
 
-	void add(StrPtr str)
+	void set(StrPtr str)
+	{
+		setRange(str, strlen(str));
+	}
+
+	@cstring addRange(StrPtr str, int len)
 	{
 		if (!ptr) {
-			set(str);
-			return;
+			setRange(str, len);
+			return this;
 		}
-		auto len1 = strlen(ptr);
-		auto len2 = strlen(str);
-		auto p = new [len1 + len2 + 1]int8;
-		memcpy(p, ptr, len1);
-		memcpy(p[len1]$, str, len2 + 1);
+		auto size = strlen(ptr);
+		auto p = new [size + len + 1]int8;
+		memcpy(p, ptr, size);
+		memcpy(p[size]$, str, len + 1);
 		~this();
 		ptr = p;
+
+		return this;
+	}
+
+	@cstring add(StrPtr str)
+	{
+		addRange(str, strlen(str));
+		return this;
 	}
 
 	StrPtr get()
