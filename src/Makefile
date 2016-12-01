@@ -2,7 +2,7 @@ OBJS = cstring.o main.o
 TARGET = sybuild
 
 sybuild : $(OBJS)
-	gcc -o $(TARGET) $(OBJS)
+	clang -o $(TARGET) $(OBJS)
 
 clean :
 	rm -f $(TARGET) *.o
