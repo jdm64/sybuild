@@ -5,6 +5,8 @@ int strlen(StrPtr str);
 
 StrPtr strcpy(StrPtr dest, StrPtr source);
 
+int strcmp(StrPtr lhs, StrPtr rhs);
+
 @void memcpy(@void dest, @void source, int size);
 
 class cstring

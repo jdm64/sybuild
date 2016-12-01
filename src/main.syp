@@ -25,22 +25,51 @@ void readOutput(@FILE stream)
 		fwrite(buf$, 1, n, stdout);
 }
 
+StrPtr getOFile(StrPtr file)
+{
+	int i;
+	for (i = strlen(file) - 1; file[i] != '.'; i--)
+	{}
+
+	cstring ofile{null};
+	ofile.addRange(file, i).add(".o");
+
+	return ofile.get();
+}
+
 int main(int argc, @[]StrPtr argv)
 {
 	if (argc < 2) {
 		write("no arguments provided\n", stdout);
 		return -1;
 	}
+	cstring outfile{"out.bin"}, oFiles{null};
 	for (int i = 1; i < argc; i++) {
+		if (!strcmp("-o", argv[i]) && i + 1 < argc) {
+			outfile.set(argv[++i]);
+			continue;
+		}
 		cstring cmd{"saphyr "};
 		cmd.add(argv[i]);
+		oFiles.add(getOFile(argv[i])).add(" ");
+
 		auto pf = popen(cmd.get(), "r");
 		readOutput(pf);
 		cmd.~this();
-		if (pclose(pf)) {
-			break;
+		auto r = pclose(pf);
+		if (r) {
+			oFiles.~this();
+			return r;
 		}
 	}
 
-	return 0;
+	cstring cmd{"clang "};
+	cmd.add("-o ").add(outfile.get()).add(" ").add(oFiles.get());
+	oFiles.~this();
+
+	auto pf = popen(cmd.get(), "r");
+	cmd.~this();
+	readOutput(pf);
+
+	return pclose(pf);
 }
