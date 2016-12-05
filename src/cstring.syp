@@ -38,7 +38,7 @@ class cstring
 		setRange(str, strlen(str));
 	}
 
-	@cstring addRange(StrPtr str, int len)
+	@this addRange(StrPtr str, int len)
 	{
 		if (!ptr) {
 			setRange(str, len);
@@ -54,7 +54,7 @@ class cstring
 		return this;
 	}
 
-	@cstring add(StrPtr str)
+	@this add(StrPtr str)
 	{
 		addRange(str, strlen(str));
 		return this;
