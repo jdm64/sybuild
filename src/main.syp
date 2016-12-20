@@ -37,6 +37,13 @@ StrPtr getOFile(StrPtr file)
 	return ofile.get();
 }
 
+int runCmd(StrPtr cmd)
+{
+	auto pf = popen(cmd.get(), "r");
+	readOutput(pf);
+	return pclose(pf);
+}
+
 int main(int argc, @[]StrPtr argv)
 {
 	if (argc < 2) {
@@ -53,10 +60,8 @@ int main(int argc, @[]StrPtr argv)
 		cmd.add(argv[i]);
 		oFiles.add(getOFile(argv[i])).add(" ");
 
-		auto pf = popen(cmd.get(), "r");
-		readOutput(pf);
+		auto r = runCmd(cmd.get());
 		cmd.~this();
-		auto r = pclose(pf);
 		if (r) {
 			oFiles.~this();
 			return r;
@@ -67,9 +72,8 @@ int main(int argc, @[]StrPtr argv)
 	cmd.add("-o ").add(outfile.get()).add(" ").add(oFiles.get());
 	oFiles.~this();
 
-	auto pf = popen(cmd.get(), "r");
+	auto ret = runCmd(cmd.get());
 	cmd.~this();
-	readOutput(pf);
 
-	return pclose(pf);
+	return ret;
 }
