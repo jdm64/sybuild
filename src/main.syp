@@ -25,23 +25,65 @@ void readOutput(@FILE stream)
 		fwrite(buf$, 1, n, stdout);
 }
 
-StrPtr getOFile(StrPtr file)
-{
-	int i;
-	for (i = strlen(file) - 1; file[i] != '.'; i--)
-	{}
-
-	cstring ofile{null};
-	ofile.addRange(file, i).add(".o");
-
-	return ofile.get();
-}
-
 int runCmd(StrPtr cmd)
 {
-	auto pf = popen(cmd.get(), "r");
+	auto pf = popen(cmd, "r");
 	readOutput(pf);
 	return pclose(pf);
+}
+
+class Builder
+{
+	struct this {
+		cstring outfile, ofiles;
+	}
+
+	this() outfile{"out.bin"}, ofiles{null}
+	{}
+
+	int compileFile(StrPtr file)
+	{
+		cstring cmd{"saphyr "};
+		cmd.add(file);
+
+		auto r = runCmd(cmd.get());
+		cmd.~this();
+		return r;
+	}
+
+	void addOFile(StrPtr file)
+	{
+		int i;
+		for (i = strlen(file) - 1; file[i] != '.'; i--)
+		{}
+
+		ofiles.addRange(file, i).add(".o").add(" ");
+	}
+
+	int parse(int argc, @[]StrPtr argv)
+	{
+		for (int i = 1; i < argc; i++) {
+			if (!strcmp("-o", argv[i]) && i + 1 < argc) {
+				outfile.set(argv[++i]);
+				continue;
+			}
+			auto r = compileFile(argv[i]);
+			if (r)
+				return r;
+			addOFile(argv[i]);
+		}
+		return 0;
+	}
+
+	int run()
+	{
+		cstring cmd{"clang "};
+		cmd.add("-o ").add(outfile.get()).add(" ").add(ofiles.get());
+
+		auto r = runCmd(cmd.get());
+		cmd.~this();
+		return r;
+	}
 }
 
 int main(int argc, @[]StrPtr argv)
@@ -50,30 +92,11 @@ int main(int argc, @[]StrPtr argv)
 		write("no arguments provided\n", stdout);
 		return -1;
 	}
-	cstring outfile{"out.bin"}, oFiles{null};
-	for (int i = 1; i < argc; i++) {
-		if (!strcmp("-o", argv[i]) && i + 1 < argc) {
-			outfile.set(argv[++i]);
-			continue;
-		}
-		cstring cmd{"saphyr "};
-		cmd.add(argv[i]);
-		oFiles.add(getOFile(argv[i])).add(" ");
 
-		auto r = runCmd(cmd.get());
-		cmd.~this();
-		if (r) {
-			oFiles.~this();
-			return r;
-		}
-	}
-
-	cstring cmd{"clang "};
-	cmd.add("-o ").add(outfile.get()).add(" ").add(oFiles.get());
-	oFiles.~this();
-
-	auto ret = runCmd(cmd.get());
-	cmd.~this();
-
-	return ret;
+	Builder builder;
+	auto r = builder.parse(argc, argv);
+	if (!r)
+		r = builder.run();
+	builder.~this();
+	return r;
 }
