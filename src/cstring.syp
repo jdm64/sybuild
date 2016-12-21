@@ -21,8 +21,10 @@ class cstring
 			ptr = null;
 			return;
 		}
-		ptr = new [strlen(str) + 1]int8;
-		strcpy(ptr, str);
+		auto len = strlen(str);
+		ptr = new [len + 1]int8;
+		memcpy(ptr, str, len);
+		ptr[len] = '\0';
 	}
 
 	void setRange(StrPtr str, int len)
@@ -31,6 +33,7 @@ class cstring
 			~this();
 		ptr = new [len + 1]int8;
 		memcpy(ptr, str, len);
+		ptr[len] = '\0';
 	}
 
 	void set(StrPtr str)
@@ -45,9 +48,11 @@ class cstring
 			return this;
 		}
 		auto size = strlen(ptr);
-		auto p = new [size + len + 1]int8;
+		auto newSize = size + len;
+		auto p = new [newSize + 1]int8;
 		memcpy(p, ptr, size);
-		memcpy(p[size]$, str, len + 1);
+		memcpy(p[size]$, str, len);
+		p[newSize] = '\0';
 		~this();
 		ptr = p;
 
