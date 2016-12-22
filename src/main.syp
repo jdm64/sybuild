@@ -12,6 +12,8 @@ int fwrite(@void ptr, int size, int count, @FILE stream);
 
 @FILE stdout;
 
+int64 getMTime(StrPtr path);
+
 void write(StrPtr str, @FILE stream)
 {
 	fwrite(str, 1, strlen(str), stream);
@@ -36,13 +38,28 @@ class Builder
 {
 	struct this {
 		cstring outfile, ofiles;
+		bool rebuild;
 	}
 
-	this() outfile{"out.bin"}, ofiles{null}
+	this() outfile{"out.bin"}, ofiles{null}, rebuild{false}
 	{}
 
 	int compileFile(StrPtr file)
 	{
+		int i;
+		for (i = strlen(file) - 1; file[i] != '.'; i--)
+		{}
+
+		cstring ofile{null};
+		ofile.addRange(file, i).add(".o");
+		auto otime = getMTime(ofile.get());
+		auto stime = getMTime(file);
+		ofile.~this();
+
+		if (otime > stime)
+			return 0;
+		rebuild = true;
+
 		cstring cmd{"saphyr "};
 		cmd.add(file);
 
@@ -77,6 +94,9 @@ class Builder
 
 	int run()
 	{
+		if (!rebuild)
+			return 0;
+
 		cstring cmd{"clang "};
 		cmd.add("-o ").add(outfile.get()).add(" ").add(ofiles.get());
 
