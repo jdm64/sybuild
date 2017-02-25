@@ -1,6 +1,7 @@
 import "cstring.syp";
 
-opaque FILE;
+#[opaque]
+struct FILE {}
 
 @FILE popen(StrPtr cmd, StrPtr type);
 
@@ -23,7 +24,7 @@ void readOutput(@FILE stream)
 {
 	[128]int8 buf;
 	int n;
-	while ((n = fread(buf$, 1, sizeof buf, stream)) > 0)
+	while ((n = fread(buf$, 1, buf->size, stream)) > 0)
 		fwrite(buf$, 1, n, stdout);
 }
 
