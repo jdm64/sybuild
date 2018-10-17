@@ -1,0 +1,53 @@
+import "GHashTable.syp";
+import "cstring.syp";
+
+class DepNode
+{
+	struct this {
+		cstring name;
+//		List<DepNode> dep;
+//		List<DepNode> dep;
+		bool dirty, visited;
+	}
+
+	this(StrPtr name) name{name}, dirty{}, visited{}
+	{}
+
+	#[static]
+	bool equal(ghashvalue left, ghashvalue right)
+	{
+		return g_str_equal(left->as(@DepNode).name.get(), right->as(@DepNode).name.get());
+	}
+
+	#[static]
+	uint hash(ghashkey node)
+	{
+		return g_str_hash(node->as(@DepNode).name.get()->as(ghashkey));
+	}
+}
+
+class DepTree
+{
+	struct this {
+		@g_hash_table map;
+	}
+
+	this()
+	{
+		map = g_hash_table.create(DepNode.hash, DepNode.equal);
+	}
+
+	~this()
+	{
+		map.remove_all();
+	}
+
+	void addFile()
+	{
+	}
+
+//	List<cstring> getDirtyFiles()
+//	{
+//	}
+}
+

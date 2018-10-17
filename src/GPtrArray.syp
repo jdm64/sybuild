@@ -1,0 +1,11 @@
+
+#[opaque]
+class g_ptr_array
+{
+	#[static, mangle("")]
+	@this create();
+
+	void add(@void data);
+
+	
+}

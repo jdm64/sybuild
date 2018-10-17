@@ -1,0 +1,26 @@
+alias ghashkey = @void;
+alias ghashvalue = @void;
+alias ghashfunc = @(ghashkey)uint;
+alias gequalfunc = @(ghashvalue,ghashvalue)bool;
+alias ghfunc = @(ghashkey,ghashvalue,@void)void;
+
+bool g_str_equal(ghashvalue v1, ghashvalue v2);
+
+uint g_str_hash(ghashkey v);
+
+#[opaque]
+class g_hash_table
+{
+	#[static, mangle("g_hash_table_new")]
+	@this create(ghashfunc hashFunc, gequalfunc equalFunc);
+
+	bool insert(ghashkey key, ghashvalue value);
+
+	ghashvalue lookup(ghashkey key);
+
+	void foreach(ghfunc func, @void userData);
+
+	bool remove(ghashkey key);
+
+	void remove_all();
+}

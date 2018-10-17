@@ -1,5 +1,5 @@
 
-alias StrPtr = @[]int8;
+alias StrPtr = @const[]const int8;
 
 int strlen(StrPtr str);
 
@@ -12,7 +12,7 @@ int strcmp(StrPtr lhs, StrPtr rhs);
 class cstring
 {
 	struct this {
-		StrPtr ptr;
+		@[]int8 ptr;
 	}
 
 	this(StrPtr str)
@@ -47,7 +47,7 @@ class cstring
 			setRange(str, len);
 			return this;
 		}
-		auto size = strlen(ptr);
+		auto size = strlen(ptr->as(@const[]const int8));
 		auto newSize = size + len;
 		auto p = new [newSize + 1]int8;
 		memcpy(p, ptr, size);
@@ -68,6 +68,11 @@ class cstring
 	StrPtr get()
 	{
 		return ptr;
+	}
+
+	bool eq(StrPtr other)
+	{
+		return !strcmp(ptr, other);
 	}
 
 	~this()

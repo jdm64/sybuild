@@ -1,0 +1,15 @@
+
+import "cstring.syp";
+
+
+cstring foo()
+{
+	cstring c{null};
+
+	return c;
+}
+
+int main()
+{
+	return 0;
+}

@@ -4,7 +4,7 @@ CC = clang
 TARGET = sybuild
 
 sybuild : $(OBJS) $(C_OBJS)
-	$(CC) -o $(TARGET) $(OBJS) $(C_OBJS)
+	$(CC) -o $(TARGET) $(OBJS) $(C_OBJS) -lglib-2.0
 
 clean :
 	rm -f $(TARGET) *.o
