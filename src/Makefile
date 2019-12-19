@@ -3,6 +3,11 @@ C_OBJS = stat.o
 CC = clang
 TARGET = sybuild
 
+# location to install
+ifeq ($(INSTALL_DIR),)
+        INSTALL_DIR = /usr/local/bin/
+endif
+
 sybuild : $(OBJS) $(C_OBJS)
 	$(CC) -o $(TARGET) $(OBJS) $(C_OBJS)
 
@@ -14,3 +19,6 @@ clean :
 
 %.o : %.c
 	$(CC) -c $<
+
+install : sybuild
+	sudo cp $(TARGET) $(INSTALL_DIR)
