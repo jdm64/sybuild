@@ -55,7 +55,6 @@ class Builder
 		ofile.addRange(file, i).add(".o");
 		auto otime = getMTime(ofile.get());
 		auto stime = getMTime(file);
-		ofile.~this();
 
 		if (otime > stime)
 			return 0;
@@ -65,7 +64,6 @@ class Builder
 		cmd.add(file);
 
 		auto r = runCmd(cmd.get());
-		cmd.~this();
 		return r;
 	}
 
@@ -102,7 +100,6 @@ class Builder
 		cmd.add("-o ").add(outfile.get()).add(" ").add(ofiles.get());
 
 		auto r = runCmd(cmd.get());
-		cmd.~this();
 		return r;
 	}
 }
@@ -118,6 +115,5 @@ int main(int argc, @[]StrPtr argv)
 	auto r = builder.parse(argc, argv);
 	if (!r)
 		r = builder.run();
-	builder.~this();
 	return r;
 }
