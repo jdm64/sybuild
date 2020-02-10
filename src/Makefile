@@ -1,4 +1,7 @@
-OBJS = cstring.o main.o
+
+STD_DIR = ~/.local/share/saphyr/pkgs/std
+
+OBJS =  $(STD_DIR)/cstring.o main.o
 C_OBJS = stat.o
 CC = clang
 TARGET = sybuild
@@ -12,7 +15,7 @@ sybuild : $(OBJS) $(C_OBJS)
 	$(CC) -o $(TARGET) $(OBJS) $(C_OBJS)
 
 clean :
-	rm -f $(TARGET) *.o
+	rm -f $(TARGET) $(OBJS) $(C_OBJS)
 
 %.o : %.syp
 	saphyr $<

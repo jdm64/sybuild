@@ -1,19 +1,6 @@
-import "cstring.syp";
-
-#[opaque]
-struct FILE {}
-
-@FILE popen(StrPtr cmd, StrPtr type);
-
-int pclose(@FILE stream);
-
-int fread(@void ptr, int size, int count, @FILE stream);
-
-int fwrite(@void ptr, int size, int count, @FILE stream);
-
-@FILE stdout;
-
-int64 getMTime(StrPtr path);
+import std.cstring;
+import std.cstdio;
+import std.ctime;
 
 void write(StrPtr str, @FILE stream)
 {
@@ -42,7 +29,7 @@ class Builder
 		bool rebuild;
 	}
 
-	this() outfile{"out.bin"}, ofiles{null}, rebuild{false}
+	this() outfile{"out.bin"}, ofiles{}, rebuild{false}
 	{}
 
 	int compileFile(StrPtr file)
@@ -51,7 +38,7 @@ class Builder
 		for (i = strlen(file) - 1; file[i] != '.'; i--)
 		{}
 
-		cstring ofile{null};
+		cstring ofile;
 		ofile.addRange(file, i).add(".o");
 		auto otime = getMTime(ofile.get());
 		auto stime = getMTime(file);
