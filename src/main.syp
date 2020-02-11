@@ -67,7 +67,7 @@ class Builder
 	{
 		for (int i = 1; i < argc; i++) {
 			if (!strcmp("-o", argv[i]) && i + 1 < argc) {
-				outfile.set(argv[++i]);
+				outfile = argv[++i];
 				continue;
 			}
 			auto r = compileFile(argv[i]);
