@@ -50,8 +50,7 @@ class Builder
 		cstring cmd{"saphyr "};
 		cmd.add(file);
 
-		auto r = runCmd(cmd.get());
-		return r;
+		return runCmd(cmd.get());
 	}
 
 	void addOFile(StrPtr file)
@@ -84,10 +83,9 @@ class Builder
 			return 0;
 
 		cstring cmd{"clang "};
-		cmd.add("-o ").add(outfile.get()).add(" ").add(ofiles.get());
+		cmd.add("-o ").add(outfile).add(" ").add(ofiles);
 
-		auto r = runCmd(cmd.get());
-		return r;
+		return runCmd(cmd.get());
 	}
 }
 
