@@ -1,8 +1,8 @@
 
-STD_DIR = ~/.local/share/saphyr/pkgs/std
+PKG_DIR = ~/.local/share/saphyr/pkgs
 
-OBJS =  $(STD_DIR)/cstring.o main.o
-C_OBJS = stat.o
+OBJS =  $(PKG_DIR)/std/cstring.o $(PKG_DIR)/std/ioutil.o main.o deptree.o
+C_OBJS = $(PKG_DIR)/std/linuxutil_ext.o
 CC = clang
 TARGET = sybuild
 
@@ -12,7 +12,7 @@ ifeq ($(INSTALL_DIR),)
 endif
 
 sybuild : $(OBJS) $(C_OBJS)
-	$(CC) -o $(TARGET) $(OBJS) $(C_OBJS)
+	$(CC) -o $(TARGET) -lglib-2.0 $(OBJS) $(C_OBJS)
 
 clean :
 	rm -f $(TARGET) $(OBJS) $(C_OBJS)
@@ -21,7 +21,7 @@ clean :
 	saphyr $<
 
 %.o : %.c
-	$(CC) -c $<
+	$(CC) -c $< -o $@
 
 install : sybuild
 	sudo cp $(TARGET) $(INSTALL_DIR)

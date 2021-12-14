@@ -1,0 +1,137 @@
+import glib.GHashTable;
+import std.cstring;
+import std.List;
+import std.ioutil;
+import std.linux;
+import std.linuxutil;
+
+class DepTree
+{
+	struct this {
+		@GHashTable files;
+		List<cstring> oFiles;
+		cstring pkgPath;
+		bool errors;
+	}
+
+	this()
+	pkgPath{getenv("XDG_DATA_HOME")}
+	{
+		files = GHashTable.create(g_str_hash, g_str_equal);
+		pkgPath.add("/saphyr/pkgs/");
+	}
+
+	~this()
+	{
+		files.foreach(|ghashkey k, ghashvalue v, @void d| => void {
+			delete v->as(@cstring);
+			return;
+		}, null);
+		files.destroy();
+	}
+
+	void importPath($cstring name, cstr base, $cstring absPath)
+	{
+		if (name.has(".syp")) {
+			absPath.add(base);
+			absPath.add("/");
+			absPath.add(name);
+		} else {
+			name.replace('.', '/');
+			absPath.add(pkgPath);
+			absPath.add(name);
+			absPath.add(".syp");
+		}
+	}
+
+	int getImports($cstring file, $List<cstring> list)
+	{
+		cstring cmd{"saphyr --imports "};
+		cmd.add(file);
+
+		writeTo(cmd, stdout);
+		writeTo("\n", stdout);
+
+		auto pf = popen(cmd.get(), "r");
+		readToLines(pf, list, true);
+		auto stat = pclose(pf);
+
+		if (stat) {
+			for (int i = 0; i < list.size(); i++) {
+				writeTo(list.at(i), stdout);
+				writeTo("\n", stdout);
+			}
+		}
+		fflush(stdout);
+		return stat;
+	}
+
+	int compileFile($cstring file)
+	{
+		int i;
+		for (i = file.size() - 1; file.ptr[i] != '.'; i--)
+		{}
+
+		cstring ofile;
+		ofile.addRange(file.get(), i).add(".o");
+		auto otime = getMTime(ofile.get());
+		auto stime = getMTime(file.get());
+
+		oFiles.add(ofile);
+
+		if (otime > stime)
+			return 0;
+
+		cstring cmd{"saphyr "};
+		cmd.add(file);
+
+		writeTo(cmd, stdout);
+		writeTo("\n", stdout);
+
+		auto pf = popen(cmd.get(), "r");
+		dumpStream(pf, stdout);
+		auto stat = pclose(pf);
+		fflush(stdout);
+		return stat;
+	}
+
+	void addFile(cstr filename)
+	{
+		cstring absPath{realpath(filename, null), true};
+		if (!absPath.get()) {
+			writeTo("file not found: ", stdout);
+			writeTo(filename, stdout);
+			writeTo("\n", stdout);
+			fflush(stdout);
+			errors = true;
+			return;
+		}
+
+		if (files.lookup(absPath.get()))
+			return;
+
+		cstring tmp{absPath};
+		auto baseName = dirname(tmp.get());
+		List<cstring> imports;
+		auto rcode = getImports(absPath, imports);
+		if (rcode) {
+			errors = true;
+			return;
+		}
+
+		rcode = compileFile(absPath);
+		if (rcode) {
+			errors = true;
+			return;
+		}
+
+		auto key = new cstring{absPath};
+		files.insert(key.get(), key);
+
+		for (int i = 0; i < imports.size(); i++) {
+			cstring path;
+			importPath(imports.at(i), baseName, path);
+			addFile(path.get());
+		}
+	}
+}

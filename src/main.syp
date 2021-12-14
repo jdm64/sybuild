@@ -1,98 +1,60 @@
-import std.cstring;
-import std.cstdio;
-import std.ctime;
+import "deptree.syp";
 
-void write(StrPtr str, @FILE stream)
+int runCmd(cstr cmd)
 {
-	fwrite(str, 1, strlen(str), stream);
-}
-
-void readOutput(@FILE stream)
-{
-	[128]int8 buf;
-	int n;
-	while ((n = fread(buf$, 1, buf->size, stream)) > 0)
-		fwrite(buf$, 1, n, stdout);
-}
-
-int runCmd(StrPtr cmd)
-{
+	writeTo(cmd, stdout);
+	writeTo("\n", stdout);
+	fflush(stdout);
 	auto pf = popen(cmd, "r");
-	readOutput(pf);
-	return pclose(pf);
+	List<cstring> lines;
+	readToLines(pf, lines, true);
+	auto r = pclose(pf);
+	fflush(stdout);
+	return r;
 }
 
 class Builder
 {
 	struct this {
 		cstring outfile, ofiles;
+		DepTree deptree;
 		bool rebuild;
 	}
 
 	this() outfile{"out.bin"}, ofiles{}, rebuild{false}
 	{}
 
-	int compileFile(StrPtr file)
-	{
-		int i;
-		for (i = strlen(file) - 1; file[i] != '.'; i--)
-		{}
-
-		cstring ofile;
-		ofile.addRange(file, i).add(".o");
-		auto otime = getMTime(ofile.get());
-		auto stime = getMTime(file);
-
-		if (otime > stime)
-			return 0;
-		rebuild = true;
-
-		cstring cmd{"saphyr "};
-		cmd.add(file);
-
-		return runCmd(cmd.get());
-	}
-
-	void addOFile(StrPtr file)
-	{
-		int i;
-		for (i = strlen(file) - 1; file[i] != '.'; i--)
-		{}
-
-		ofiles.addRange(file, i).add(".o").add(" ");
-	}
-
-	int parse(int argc, @[]StrPtr argv)
+	bool parse(int argc, @[]cstr argv)
 	{
 		for (int i = 1; i < argc; i++) {
 			if (!strcmp("-o", argv[i]) && i + 1 < argc) {
 				outfile = argv[++i];
 				continue;
 			}
-			auto r = compileFile(argv[i]);
-			if (r)
-				return r;
-			addOFile(argv[i]);
+			deptree.addFile(argv[i]);
+			if (deptree.errors)
+				return true;
 		}
-		return 0;
+		return false;
 	}
 
 	int run()
 	{
-		if (!rebuild)
-			return 0;
-
 		cstring cmd{"clang "};
-		cmd.add("-o ").add(outfile).add(" ").add(ofiles);
+		cmd.add("-o ").add(outfile);
+
+		for (int i = 0; i < deptree.oFiles.size(); i++) {
+			cmd.add(" ").add(deptree.oFiles.at(i));
+		}
 
 		return runCmd(cmd.get());
 	}
 }
 
-int main(int argc, @[]StrPtr argv)
+int main(int argc, @[]cstr argv)
 {
 	if (argc < 2) {
-		write("no arguments provided\n", stdout);
+		writeTo("no arguments provided\n", stdout);
 		return -1;
 	}
 
