@@ -10,6 +10,7 @@ class DepTree
 	struct this {
 		@GHashTable files;
 		List<cstring> oFiles;
+		List<cstring> libs;
 		cstring pkgPath;
 		bool errors;
 	}
@@ -44,18 +45,27 @@ class DepTree
 		}
 	}
 
-	int getImports($cstring file, $List<cstring> list)
+	int runCmd($cstring cmd, @List<cstring> lines)
 	{
-		cstring cmd{"saphyr --imports "};
-		cmd.add(file);
-
 		writeTo(cmd, stdout);
 		writeTo("\n", stdout);
 
 		auto pf = popen(cmd.get(), "r");
-		readToLines(pf, list, true);
+		if (lines)
+			readToLines(pf, lines@, true);
+		else
+			dumpStream(pf, stdout);
 		auto stat = pclose(pf);
+		fflush(stdout);
+		return stat;
+	}
 
+	int getStat($cstring file, $List<cstring> list)
+	{
+		cstring cmd{"saphyr --stat "};
+		cmd.add(file);
+
+		auto stat = runCmd(cmd, list$);
 		if (stat) {
 			for (int i = 0; i < list.size(); i++) {
 				writeTo(list.at(i), stdout);
@@ -85,14 +95,79 @@ class DepTree
 		cstring cmd{"saphyr "};
 		cmd.add(file);
 
-		writeTo(cmd, stdout);
-		writeTo("\n", stdout);
+		return runCmd(cmd, null);
+	}
 
-		auto pf = popen(cmd.get(), "r");
-		dumpStream(pf, stdout);
-		auto stat = pclose(pf);
-		fflush(stdout);
-		return stat;
+	int compileCFile($cstring file, cstr basename)
+	{
+		cstring cfile{basename};
+		cfile.add("/").add(file);
+
+		int i;
+		for (i = cfile.size() - 1; cfile.ptr[i] != '.'; i--)
+		{}
+
+		cstring ofile;
+		ofile.addRange(cfile.get(), i).add(".o");
+		auto otime = getMTime(ofile.get());
+		auto stime = getMTime(cfile.get());
+
+		oFiles.add(ofile);
+
+		if (otime > stime)
+			return 0;
+
+		cstring cmd{"clang -c "};
+		cmd.add(cfile).add(" -o ").add(ofile);
+
+		return runCmd(cmd, null);
+	}
+
+	bool handlePackageInfo($cstring key, $cstring value, cstr basename)
+	{
+		if (key == "header") {
+			return true;
+		} else if (key == "cfile") {
+			compileCFile(value, basename);
+		} else if (key == "linker") {
+			libs.add(value);
+		}
+		return false;
+	}
+
+	bool parseStat($List<cstring> lines, cstr baseName)
+	{
+		bool isHeader = false;
+		for (int i = 0; i < lines.size(); i++) {
+			auto line = lines.at(i);
+			auto str = line.get();
+			auto len = line.size();
+			switch (str[0]) {
+			case 'i':
+			case 'I':
+				cstring fileName{line.substr(2, len), true};
+				cstring path;
+				importPath(fileName, baseName, path);
+				addFile(path.get());
+				break;
+			case 'P':
+				int z = 2;
+				for (; z < len; z++) {
+					if (str[z] == '=')
+						break;
+				}
+				cstring key{line.substr(2, z), true};
+				auto hasVal = str[z] == '=';
+				cstring value{hasVal ? line.substr(z + 1, len) : null, true};
+				isHeader |= handlePackageInfo(key, value, baseName);
+				break;
+			default:
+				writeTo("invalid package key", stdout);
+				writeTo("\n", stdout);
+				errors = true;
+			}
+		}
+		return isHeader;
 	}
 
 	void addFile(cstr filename)
@@ -110,28 +185,38 @@ class DepTree
 		if (files.lookup(absPath.get()))
 			return;
 
-		cstring tmp{absPath};
-		auto baseName = dirname(tmp.get());
-		List<cstring> imports;
-		auto rcode = getImports(absPath, imports);
-		if (rcode) {
-			errors = true;
-			return;
-		}
-
-		rcode = compileFile(absPath);
-		if (rcode) {
-			errors = true;
-			return;
-		}
-
 		auto key = new cstring{absPath};
 		files.insert(key.get(), key);
 
-		for (int i = 0; i < imports.size(); i++) {
-			cstring path;
-			importPath(imports.at(i), baseName, path);
-			addFile(path.get());
+		cstring tmp{absPath};
+		auto baseName = dirname(tmp.get());
+		List<cstring> lines;
+		auto rcode = getStat(absPath, lines);
+		if (rcode) {
+			errors = true;
+			return;
 		}
+
+		auto isHeader = parseStat(lines, baseName);
+		if (isHeader)
+			return;
+
+		rcode = compileFile(absPath);
+		if (rcode)
+			errors = true;
+	}
+
+	int runLinker($cstring outfile)
+	{
+		cstring cmd{"clang "};
+		cmd.add("-o ").add(outfile);
+
+		for (int i = 0; i < libs.size(); i++)
+			cmd.add(" -l").add(libs.at(i));
+
+		for (int i = 0; i < oFiles.size(); i++)
+			cmd.add(" ").add(oFiles.at(i));
+
+		return runCmd(cmd, null);
 	}
 }

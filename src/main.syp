@@ -40,14 +40,7 @@ class Builder
 
 	int run()
 	{
-		cstring cmd{"clang "};
-		cmd.add("-o ").add(outfile);
-
-		for (int i = 0; i < deptree.oFiles.size(); i++) {
-			cmd.add(" ").add(deptree.oFiles.at(i));
-		}
-
-		return runCmd(cmd.get());
+		return deptree.runLinker(outfile);
 	}
 }
 
